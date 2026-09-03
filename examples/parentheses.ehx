@@ -1,0 +1,6 @@
+set x = 10
+set y = 20
+
+say x + y * 2
+say (x + y) * 2
+say -(x + y)

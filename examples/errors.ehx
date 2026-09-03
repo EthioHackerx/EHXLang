@@ -1,0 +1,4 @@
+set x = 10
+set y = 0
+
+say x / y

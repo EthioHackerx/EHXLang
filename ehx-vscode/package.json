@@ -1,0 +1,35 @@
+{
+  "name": "ehxlang",
+  "displayName": "EHXLang",
+  "description": "Syntax highlighting support for EHXLang",
+  "version": "0.1.0",
+  "publisher": "ethio-hacker-x",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "ehxlang",
+        "aliases": [
+          "EHXLang",
+          "ehx"
+        ],
+        "extensions": [
+          ".ehx"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "ehxlang",
+        "scopeName": "source.ehx",
+        "path": "./syntaxes/ehx.tmLanguage.json"
+      }
+    ]
+  }
+}
