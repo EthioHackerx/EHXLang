@@ -55,7 +55,60 @@ class Lexer:
                 tokens.append(self.read_identifier())
                 continue
 
-            # Operators
+            # Two-character operators
+            if current == "=" and self.peek_next() == "=":
+                tokens.append(
+                    Token(
+                        TokenType.EQUAL_EQUAL,
+                        "==",
+                        self.line,
+                        self.column
+                    )
+                )
+                self.advance()
+                self.advance()
+                continue
+
+            if current == "!" and self.peek_next() == "=":
+                tokens.append(
+                    Token(
+                        TokenType.NOT_EQUAL,
+                        "!=",
+                        self.line,
+                        self.column
+                    )
+                )
+                self.advance()
+                self.advance()
+                continue
+
+            if current == ">" and self.peek_next() == "=":
+                tokens.append(
+                    Token(
+                        TokenType.GREATER_EQUAL,
+                        ">=",
+                        self.line,
+                        self.column
+                    )
+                )
+                self.advance()
+                self.advance()
+                continue
+
+            if current == "<" and self.peek_next() == "=":
+                tokens.append(
+                    Token(
+                        TokenType.LESS_EQUAL,
+                        "<=",
+                        self.line,
+                        self.column
+                    )
+                )
+                self.advance()
+                self.advance()
+                continue
+
+            # Single-character operators
             if current == "+":
                 tokens.append(
                     Token(
@@ -116,6 +169,30 @@ class Lexer:
                 self.advance()
                 continue
 
+            if current == ">":
+                tokens.append(
+                    Token(
+                        TokenType.GREATER,
+                        ">",
+                        self.line,
+                        self.column
+                    )
+                )
+                self.advance()
+                continue
+
+            if current == "<":
+                tokens.append(
+                    Token(
+                        TokenType.LESS,
+                        "<",
+                        self.line,
+                        self.column
+                    )
+                )
+                self.advance()
+                continue
+
             # Parentheses
             if current == "(":
                 tokens.append(
@@ -141,6 +218,7 @@ class Lexer:
                 self.advance()
                 continue
 
+            # Unknown character
             raise SyntaxError(
                 f"EHX Error: unexpected character "
                 f"'{current}' on line {self.line}"
@@ -157,8 +235,18 @@ class Lexer:
 
         return tokens
 
+    # -------------------------
+    # Character utilities
+    # -------------------------
+
     def peek(self):
         return self.source[self.position]
+
+    def peek_next(self):
+        if self.position + 1 >= len(self.source):
+            return "\0"
+
+        return self.source[self.position + 1]
 
     def advance(self):
         self.position += 1
@@ -167,9 +255,17 @@ class Lexer:
     def is_at_end(self):
         return self.position >= len(self.source)
 
+    # -------------------------
+    # Comments
+    # -------------------------
+
     def skip_comment(self):
         while not self.is_at_end() and self.peek() != "\n":
             self.advance()
+
+    # -------------------------
+    # Strings
+    # -------------------------
 
     def read_string(self):
         start_line = self.line
@@ -203,6 +299,10 @@ class Lexer:
             start_line,
             start_column
         )
+
+    # -------------------------
+    # Numbers
+    # -------------------------
 
     def read_number(self):
         start_line = self.line
@@ -240,6 +340,10 @@ class Lexer:
             start_column
         )
 
+    # -------------------------
+    # Identifiers / Keywords
+    # -------------------------
+
     def read_identifier(self):
         start_line = self.line
         start_column = self.column
@@ -258,7 +362,12 @@ class Lexer:
 
         keywords = {
             "set": TokenType.SET,
-            "say": TokenType.SAY
+            "say": TokenType.SAY,
+            "true": TokenType.TRUE,
+            "false": TokenType.FALSE,
+            "and": TokenType.AND,
+            "or": TokenType.OR,
+            "not": TokenType.NOT
         }
 
         token_type = keywords.get(

@@ -70,14 +70,75 @@ class Parser:
     # -------------------------
 
     def parse_expression(self):
-        return self.parse_addition()
+        return self.parse_or()
 
+    # OR
+    def parse_or(self):
+        expression = self.parse_and()
+
+        while self.match(TokenType.OR):
+            right = self.parse_and()
+
+            expression = {
+                "type": "logical",
+                "operator": "or",
+                "left": expression,
+                "right": right
+            }
+
+        return expression
+
+    # AND
+    def parse_and(self):
+        expression = self.parse_comparison()
+
+        while self.match(TokenType.AND):
+            right = self.parse_comparison()
+
+            expression = {
+                "type": "logical",
+                "operator": "and",
+                "left": expression,
+                "right": right
+            }
+
+        return expression
+
+    # Comparisons
+    def parse_comparison(self):
+        expression = self.parse_addition()
+
+        while (
+            self.match(
+                TokenType.EQUAL_EQUAL,
+                TokenType.NOT_EQUAL,
+                TokenType.GREATER,
+                TokenType.LESS,
+                TokenType.GREATER_EQUAL,
+                TokenType.LESS_EQUAL
+            )
+        ):
+            operator = self.previous().value
+            right = self.parse_addition()
+
+            expression = {
+                "type": "comparison",
+                "operator": operator,
+                "left": expression,
+                "right": right
+            }
+
+        return expression
+
+    # Addition / subtraction
     def parse_addition(self):
         expression = self.parse_multiplication()
 
         while (
-            self.match(TokenType.PLUS)
-            or self.match(TokenType.MINUS)
+            self.match(
+                TokenType.PLUS,
+                TokenType.MINUS
+            )
         ):
             operator = self.previous().value
             right = self.parse_multiplication()
@@ -91,12 +152,15 @@ class Parser:
 
         return expression
 
+    # Multiplication / division
     def parse_multiplication(self):
         expression = self.parse_unary()
 
         while (
-            self.match(TokenType.STAR)
-            or self.match(TokenType.SLASH)
+            self.match(
+                TokenType.STAR,
+                TokenType.SLASH
+            )
         ):
             operator = self.previous().value
             right = self.parse_unary()
@@ -110,6 +174,7 @@ class Parser:
 
         return expression
 
+    # Unary operators
     def parse_unary(self):
         if self.match(TokenType.MINUS):
             return {
@@ -118,8 +183,16 @@ class Parser:
                 "value": self.parse_unary()
             }
 
+        if self.match(TokenType.NOT):
+            return {
+                "type": "unary",
+                "operator": "not",
+                "value": self.parse_unary()
+            }
+
         return self.parse_primary()
 
+    # Primary values
     def parse_primary(self):
         if self.match(TokenType.NUMBER):
             return {
@@ -131,6 +204,18 @@ class Parser:
             return {
                 "type": "string",
                 "value": self.previous().value
+            }
+
+        if self.match(TokenType.TRUE):
+            return {
+                "type": "boolean",
+                "value": True
+            }
+
+        if self.match(TokenType.FALSE):
+            return {
+                "type": "boolean",
+                "value": False
             }
 
         if self.match(TokenType.IDENTIFIER):

@@ -54,11 +54,20 @@ class Interpreter:
         if expression_type == "number":
             return expression["value"]
 
+        if expression_type == "boolean":
+            return expression["value"]
+
         if expression_type == "identifier":
             return self.evaluate_identifier(expression)
 
         if expression_type == "binary":
             return self.evaluate_binary(expression)
+
+        if expression_type == "comparison":
+            return self.evaluate_comparison(expression)
+
+        if expression_type == "logical":
+            return self.evaluate_logical(expression)
 
         if expression_type == "unary":
             return self.evaluate_unary(expression)
@@ -67,6 +76,10 @@ class Interpreter:
             f"EHX Error: unknown expression type "
             f"'{expression_type}'"
         )
+
+    # -------------------------
+    # Variables
+    # -------------------------
 
     def evaluate_identifier(self, expression):
         name = expression["name"]
@@ -78,6 +91,10 @@ class Interpreter:
             )
 
         return self.variables[name]
+
+    # -------------------------
+    # Unary
+    # -------------------------
 
     def evaluate_unary(self, expression):
         value = self.evaluate(expression["value"])
@@ -92,10 +109,23 @@ class Interpreter:
 
             return -value
 
+        if operator == "not":
+            if not isinstance(value, bool):
+                raise RuntimeError(
+                    "EHX Error: 'not' "
+                    "requires a boolean"
+                )
+
+            return not value
+
         raise RuntimeError(
             f"EHX Error: unknown unary operator "
             f"'{operator}'"
         )
+
+    # -------------------------
+    # Arithmetic
+    # -------------------------
 
     def evaluate_binary(self, expression):
         left = self.evaluate(expression["left"])
@@ -156,6 +186,120 @@ class Interpreter:
         )
 
     # -------------------------
+    # Comparisons
+    # -------------------------
+
+    def evaluate_comparison(self, expression):
+        left = self.evaluate(expression["left"])
+        right = self.evaluate(expression["right"])
+
+        operator = expression["operator"]
+
+        if operator == "==":
+            return left == right
+
+        if operator == "!=":
+            return left != right
+
+        if operator == ">":
+            return self.compare_values(left, right, ">")
+
+        if operator == "<":
+            return self.compare_values(left, right, "<")
+
+        if operator == ">=":
+            return self.compare_values(left, right, ">=")
+
+        if operator == "<=":
+            return self.compare_values(left, right, "<=")
+
+        raise RuntimeError(
+            f"EHX Error: unknown comparison operator "
+            f"'{operator}'"
+        )
+
+    def compare_values(self, left, right, operator):
+        if type(left) != type(right):
+            raise RuntimeError(
+                "EHX Error: cannot compare "
+                f"{self.type_name(left)} and "
+                f"{self.type_name(right)}"
+            )
+
+        if not (
+            self.is_number(left)
+            or isinstance(left, str)
+        ):
+            raise RuntimeError(
+                "EHX Error: values are not orderable"
+            )
+
+        if operator == ">":
+            return left > right
+
+        if operator == "<":
+            return left < right
+
+        if operator == ">=":
+            return left >= right
+
+        if operator == "<=":
+            return left <= right
+
+        raise RuntimeError(
+            f"EHX Error: unknown comparison '{operator}'"
+        )
+
+    # -------------------------
+    # Logical operators
+    # -------------------------
+
+    def evaluate_logical(self, expression):
+        operator = expression["operator"]
+
+        left = self.evaluate(expression["left"])
+
+        if not isinstance(left, bool):
+            raise RuntimeError(
+                f"EHX Error: '{operator}' "
+                "requires boolean values"
+            )
+
+        # Short-circuit evaluation
+        if operator == "and":
+            if not left:
+                return False
+
+            right = self.evaluate(expression["right"])
+
+            if not isinstance(right, bool):
+                raise RuntimeError(
+                    "EHX Error: 'and' "
+                    "requires boolean values"
+                )
+
+            return left and right
+
+        if operator == "or":
+            if left:
+                return True
+
+            right = self.evaluate(expression["right"])
+
+            if not isinstance(right, bool):
+                raise RuntimeError(
+                    "EHX Error: 'or' "
+                    "requires boolean values"
+                )
+
+            return left or right
+
+        raise RuntimeError(
+            f"EHX Error: unknown logical operator "
+            f"'{operator}'"
+        )
+
+    # -------------------------
     # Type helpers
     # -------------------------
 
@@ -166,6 +310,9 @@ class Interpreter:
         ) or isinstance(value, float)
 
     def type_name(self, value):
+        if isinstance(value, bool):
+            return "boolean"
+
         if isinstance(value, str):
             return "string"
 

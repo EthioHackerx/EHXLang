@@ -13,10 +13,19 @@
       "include": "#numbers"
     },
     {
+      "include": "#booleans"
+    },
+    {
       "include": "#keywords"
     },
     {
+      "include": "#logical"
+    },
+    {
       "include": "#commands"
+    },
+    {
+      "include": "#comparisons"
     },
     {
       "include": "#operators"
@@ -61,6 +70,15 @@
       ]
     },
 
+    "booleans": {
+      "patterns": [
+        {
+          "name": "constant.language.boolean.ehx",
+          "match": "\\b(true|false)\\b"
+        }
+      ]
+    },
+
     "keywords": {
       "patterns": [
         {
@@ -70,11 +88,29 @@
       ]
     },
 
+    "logical": {
+      "patterns": [
+        {
+          "name": "keyword.operator.logical.ehx",
+          "match": "\\b(and|or|not)\\b"
+        }
+      ]
+    },
+
     "commands": {
       "patterns": [
         {
           "name": "support.function.ehx",
           "match": "\\b(say)\\b"
+        }
+      ]
+    },
+
+    "comparisons": {
+      "patterns": [
+        {
+          "name": "keyword.operator.comparison.ehx",
+          "match": "==|!=|>=|<=|>|<"
         }
       ]
     },

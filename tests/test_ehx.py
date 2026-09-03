@@ -249,6 +249,124 @@ class TestEHXLang(unittest.TestCase):
                 'set result = -"EHX"'
             )
 
+    def test_boolean_true(self):
+        interpreter = run_ehx(
+            "set active = true"
+        )
+
+        self.assertEqual(
+            interpreter.variables["active"],
+            True
+        )
+
+    def test_boolean_false(self):
+        interpreter = run_ehx(
+            "set active = false"
+        )
+
+        self.assertEqual(
+            interpreter.variables["active"],
+            False
+        )
+
+    def test_equal(self):
+        interpreter = run_ehx(
+            "set result = 10 == 10"
+        )
+
+        self.assertTrue(
+            interpreter.variables["result"]
+        )
+
+    def test_not_equal(self):
+        interpreter = run_ehx(
+            "set result = 10 != 20"
+        )
+
+        self.assertTrue(
+            interpreter.variables["result"]
+        )
+
+    def test_greater(self):
+        interpreter = run_ehx(
+            "set result = 20 > 10"
+        )
+
+        self.assertTrue(
+            interpreter.variables["result"]
+        )
+
+    def test_less(self):
+        interpreter = run_ehx(
+            "set result = 10 < 20"
+        )
+
+        self.assertTrue(
+            interpreter.variables["result"]
+        )
+
+    def test_greater_equal(self):
+        interpreter = run_ehx(
+            "set result = 10 >= 10"
+        )
+
+        self.assertTrue(
+            interpreter.variables["result"]
+        )
+
+    def test_less_equal(self):
+        interpreter = run_ehx(
+            "set result = 10 <= 20"
+        )
+
+        self.assertTrue(
+            interpreter.variables["result"]
+        )
+
+    def test_and(self):
+        interpreter = run_ehx(
+            "set result = true and true"
+        )
+
+        self.assertTrue(
+            interpreter.variables["result"]
+        )
+
+    def test_or(self):
+        interpreter = run_ehx(
+            "set result = false or true"
+        )
+
+        self.assertTrue(
+            interpreter.variables["result"]
+        )
+
+    def test_not(self):
+        interpreter = run_ehx(
+            "set result = not true"
+        )
+
+        self.assertFalse(
+            interpreter.variables["result"]
+        )
+
+    def test_logic_precedence(self):
+        interpreter = run_ehx(
+            "set result = 10 > 5 and 20 > 10"
+        )
+
+        self.assertTrue(
+            interpreter.variables["result"]
+        )
+
+    def test_parentheses_logic(self):
+        interpreter = run_ehx(
+            "set result = (10 > 5) and (20 < 30)"
+        )
+
+        self.assertTrue(
+            interpreter.variables["result"]
+        )
 
 if __name__ == "__main__":
     unittest.main()
