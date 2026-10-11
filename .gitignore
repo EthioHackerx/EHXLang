@@ -10,6 +10,7 @@ dist/
 EHXSetup.exe
 
 # Local scratch / test files
+tests/
 examples/
 crack_report.json
 my_notes.txt
