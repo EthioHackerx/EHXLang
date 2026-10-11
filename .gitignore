@@ -1,0 +1,27 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# PyInstaller / Build Artifacts
+build/
+dist/
+*.spec
+EHXSetup.exe
+
+# Local scratch / test files
+examples/
+crack_report.json
+my_notes.txt
+showcase_notes.txt
+security_audit.zip
+test_src.txt
+test_archive.zip
+test_extracted/
+notes.txt
+temp_test.ehx
+
+# Operating System files
+.DS_Store
+Thumbs.db
+desktop.ini

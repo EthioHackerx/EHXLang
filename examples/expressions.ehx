@@ -1,9 +1,0 @@
-# EHXLang arithmetic
-
-set a = 10
-set b = 5
-
-say a + b
-say a - b
-say a * b
-say a / b

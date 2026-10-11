@@ -1,8 +1,8 @@
 {
   "name": "ehxlang",
   "displayName": "EHXLang",
-  "description": "Syntax highlighting support for EHXLang",
-  "version": "0.1.0",
+  "description": "Syntax highlighting and language support for EHXLang (by Ethio Hacker X)",
+  "version": "1.0.0",
   "publisher": "ethio-hacker-x",
   "engines": {
     "vscode": "^1.80.0"

@@ -1,0 +1,111 @@
+# =====================================================================
+#   EHXLang v1.0.0 - Official Language Showcase
+#   Developed by Yonatan Muluken ( ETHIO HACKER X )
+#   A Modern, Human-Readable Programming Language for Everyone
+# =====================================================================
+
+show("==========================================================")
+show("     WELCOME TO EHXLANG (v1.0.0) SHOWCASE DEMO            ")
+show("==========================================================")
+
+# ---------------------------------------------------------------------
+# 1. Variables, Data Types & Type Inspection (set & kind)
+# ---------------------------------------------------------------------
+set language = "EHXLang"
+set version = 1.0
+set is_active = true
+set ports = [21, 22, 80, 443, 8080]
+
+show(f"[*] Running {language} v{version} (Active: {is_active})")
+show("[*] Type inspection: kind(language) ->", kind(language))
+show("[*] Type inspection: kind(ports)    ->", kind(ports))
+
+# ---------------------------------------------------------------------
+# 2. Modern F-Strings & Mathematical Primitives
+# ---------------------------------------------------------------------
+set target_ip = "192.168.1.105"
+set base_port = 80
+
+show(f"\n[*] Scanning Target Host: {target_ip}:{base_port}")
+show(f"[*] Exponentiation:     2 ** 8  = {2 ** 8}")
+show(f"[*] Integer Division:   100 // 3 = {100 // 3}")
+show(f"[*] Modulo Remainder:   17 % 5   = {17 % 5}")
+show(f"[*] Lowest / Highest:   Min = {lowest(ports)}, Max = {highest(ports)}")
+
+# ---------------------------------------------------------------------
+# 3. Clean Array Operations (.add, .rm, .order, .fuse)
+# ---------------------------------------------------------------------
+show("\n[*] Array Operations:")
+ports.add(8443)
+show(f"    Added port 8443: {ports.fuse(', ')}")
+
+set last_port = ports.rm()
+show(f"    Removed last element: {last_port}")
+
+ports.order()
+show(f"    Sorted ports: {ports.fuse(' | ')}")
+
+# ---------------------------------------------------------------------
+# 4. Plain-English Control Flow (when, or when, otherwise)
+# ---------------------------------------------------------------------
+show("\n[*] Testing Plain-English Conditionals:")
+set test_port = 443
+
+when test_port == 80:
+    show("    -> Service identified: HTTP Web Server")
+or when test_port == 443:
+    show("    -> Service identified: HTTPS Secure Web Server")
+or when test_port == 22:
+    show("    -> Service identified: SSH Secure Shell")
+otherwise:
+    show(f"    -> Custom Service Port: {test_port}")
+
+# ---------------------------------------------------------------------
+# 5. Loops & Sequences (for ... in, range, while)
+# ---------------------------------------------------------------------
+show("\n[*] Iterating over ports using 'for ... in':")
+for p in ports:
+    when p == 80 or p == 443:
+        show(f"    [WEB] Port {p} is open")
+
+show("\n[*] Iterating with 'range(1, 4)':")
+for attempt in range(1, 4):
+    show(f"    Connection handshake attempt #{attempt}...")
+
+# ---------------------------------------------------------------------
+# 6. Reusable Functions & Returning Values (fn & return)
+# ---------------------------------------------------------------------
+fn calculate_keyspace(bits):
+    set total = 2 ** bits
+    return total
+
+set keyspace_16 = calculate_keyspace(16)
+show(f"\n[*] 16-Bit Encryption Keyspace: {keyspace_16} combinations")
+
+# ---------------------------------------------------------------------
+# 7. Built-in Security, Hashes & File Automation
+# ---------------------------------------------------------------------
+show("\n[*] Cryptographic Hashing & System Automation:")
+set sample_token = "admin_password"
+show(f"    MD5:     {md5(sample_token)}")
+show(f"    SHA-256: {sha256(sample_token)}")
+
+set encoded = base64_encode("Ethio Hacker X")
+show(f"    Base64:  {encoded} -> Decoded: {base64_decode(encoded)}")
+
+# File I/O with plain English primitives
+set demo_file = "showcase_notes.txt"
+save(demo_file, "EHXLang Automation Log\n")
+add_to(demo_file, "System status: OPERATIONAL\n")
+
+when has_file(demo_file):
+    show(f"    File '{demo_file}' created successfully:")
+    show("    " + read(demo_file).trim())
+
+# Clean pause delay
+show("\n[*] Pausing execution for 0.5s...")
+pause(0.5)
+
+show("==========================================================")
+show("  [SUCCESS] All EHXLang Showcase Operations Verified!     ")
+show("==========================================================")

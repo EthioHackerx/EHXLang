@@ -2,382 +2,597 @@ from tokens import Token, TokenType
 
 
 class Lexer:
+    KEYWORDS = {
+        "let": TokenType.LET,
+        "set": TokenType.SET,
+        "show": TokenType.SHOW,
+        "when": TokenType.WHEN,
+        "otherwise": TokenType.OTHERWISE,
+        "while": TokenType.WHILE,
+        "for": TokenType.FOR,
+        "in": TokenType.IN,
+        "fn": TokenType.FN,
+        "return": TokenType.RETURN,
+        "import": TokenType.IMPORT,
+        "load": TokenType.LOAD,
+        "try": TokenType.TRY,
+        "catch": TokenType.CATCH,
+        "break": TokenType.BREAK,
+        "continue": TokenType.CONTINUE,
+        "none": TokenType.NONE,
+        "true": TokenType.TRUE,
+        "false": TokenType.FALSE,
+        "and": TokenType.AND,
+        "or": TokenType.OR,
+        "not": TokenType.NOT,
+    }
+
     def __init__(self, source):
-        self.source = source
+        self.source = source.replace("\r\n", "\n").replace("\r", "\n")
         self.position = 0
         self.line = 1
         self.column = 1
 
-    def tokenize(self):
-        tokens = []
+        self.tokens = []
 
-        while not self.is_at_end():
-            current = self.peek()
+        # Indentation levels.
+        # Level 0 = no indentation.
+        self.indents = [0]
 
-            # Spaces and tabs
-            if current in " \t\r":
-                self.advance()
-                continue
+        self.at_line_start = True
+        self.bracket_depth = 0
 
-            # New line
-            if current == "\n":
-                tokens.append(
-                    Token(
-                        TokenType.NEWLINE,
-                        "\n",
-                        self.line,
-                        self.column
-                    )
-                )
+    def current(self):
+        if self.position >= len(self.source):
+            return "\0"
 
-                self.advance()
-                self.line += 1
-                self.column = 1
-                continue
-
-            # Comments
-            if current == "#":
-                self.skip_comment()
-                continue
-
-            # Strings
-            if current == '"':
-                tokens.append(self.read_string())
-                continue
-
-            # Numbers
-            if current.isdigit():
-                tokens.append(self.read_number())
-                continue
-
-            # Identifiers / keywords
-            if current.isalpha() or current == "_":
-                tokens.append(self.read_identifier())
-                continue
-
-            # Two-character operators
-            if current == "=" and self.peek_next() == "=":
-                tokens.append(
-                    Token(
-                        TokenType.EQUAL_EQUAL,
-                        "==",
-                        self.line,
-                        self.column
-                    )
-                )
-                self.advance()
-                self.advance()
-                continue
-
-            if current == "!" and self.peek_next() == "=":
-                tokens.append(
-                    Token(
-                        TokenType.NOT_EQUAL,
-                        "!=",
-                        self.line,
-                        self.column
-                    )
-                )
-                self.advance()
-                self.advance()
-                continue
-
-            if current == ">" and self.peek_next() == "=":
-                tokens.append(
-                    Token(
-                        TokenType.GREATER_EQUAL,
-                        ">=",
-                        self.line,
-                        self.column
-                    )
-                )
-                self.advance()
-                self.advance()
-                continue
-
-            if current == "<" and self.peek_next() == "=":
-                tokens.append(
-                    Token(
-                        TokenType.LESS_EQUAL,
-                        "<=",
-                        self.line,
-                        self.column
-                    )
-                )
-                self.advance()
-                self.advance()
-                continue
-
-            # Single-character operators
-            if current == "+":
-                tokens.append(
-                    Token(
-                        TokenType.PLUS,
-                        "+",
-                        self.line,
-                        self.column
-                    )
-                )
-                self.advance()
-                continue
-
-            if current == "-":
-                tokens.append(
-                    Token(
-                        TokenType.MINUS,
-                        "-",
-                        self.line,
-                        self.column
-                    )
-                )
-                self.advance()
-                continue
-
-            if current == "*":
-                tokens.append(
-                    Token(
-                        TokenType.STAR,
-                        "*",
-                        self.line,
-                        self.column
-                    )
-                )
-                self.advance()
-                continue
-
-            if current == "/":
-                tokens.append(
-                    Token(
-                        TokenType.SLASH,
-                        "/",
-                        self.line,
-                        self.column
-                    )
-                )
-                self.advance()
-                continue
-
-            if current == "=":
-                tokens.append(
-                    Token(
-                        TokenType.EQUAL,
-                        "=",
-                        self.line,
-                        self.column
-                    )
-                )
-                self.advance()
-                continue
-
-            if current == ">":
-                tokens.append(
-                    Token(
-                        TokenType.GREATER,
-                        ">",
-                        self.line,
-                        self.column
-                    )
-                )
-                self.advance()
-                continue
-
-            if current == "<":
-                tokens.append(
-                    Token(
-                        TokenType.LESS,
-                        "<",
-                        self.line,
-                        self.column
-                    )
-                )
-                self.advance()
-                continue
-
-            # Parentheses
-            if current == "(":
-                tokens.append(
-                    Token(
-                        TokenType.LEFT_PAREN,
-                        "(",
-                        self.line,
-                        self.column
-                    )
-                )
-                self.advance()
-                continue
-
-            if current == ")":
-                tokens.append(
-                    Token(
-                        TokenType.RIGHT_PAREN,
-                        ")",
-                        self.line,
-                        self.column
-                    )
-                )
-                self.advance()
-                continue
-
-            # Unknown character
-            raise SyntaxError(
-                f"EHX Error: unexpected character "
-                f"'{current}' on line {self.line}"
-            )
-
-        tokens.append(
-            Token(
-                TokenType.EOF,
-                None,
-                self.line,
-                self.column
-            )
-        )
-
-        return tokens
-
-    # -------------------------
-    # Character utilities
-    # -------------------------
-
-    def peek(self):
         return self.source[self.position]
 
-    def peek_next(self):
+    def peek(self):
         if self.position + 1 >= len(self.source):
             return "\0"
 
         return self.source[self.position + 1]
 
     def advance(self):
-        self.position += 1
-        self.column += 1
+        char = self.current()
 
-    def is_at_end(self):
-        return self.position >= len(self.source)
+        if char == "\n":
+            self.position += 1
+            self.line += 1
+            self.column = 1
+            self.at_line_start = True
+        else:
+            self.position += 1
+            self.column += 1
+            self.at_line_start = False
 
-    # -------------------------
-    # Comments
-    # -------------------------
+        return char
 
-    def skip_comment(self):
-        while not self.is_at_end() and self.peek() != "\n":
-            self.advance()
+    def add_token(self, token_type, value, line=None, column=None):
+        self.tokens.append(
+            Token(
+                token_type,
+                value,
+                line if line is not None else self.line,
+                column if column is not None else self.column,
+            )
+        )
 
-    # -------------------------
-    # Strings
-    # -------------------------
+    def handle_indentation(self):
+        # Inside brackets/parentheses/braces, indentation is ignored (implicit line continuation)
+        if self.bracket_depth > 0:
+            while self.current() == " ":
+                self.advance()
+            self.at_line_start = False
+            return
 
-    def read_string(self):
         start_line = self.line
         start_column = self.column
 
-        self.advance()
+        spaces = 0
 
-        value = ""
-
-        while not self.is_at_end() and self.peek() != '"':
-            if self.peek() == "\n":
-                raise SyntaxError(
-                    f"EHX Error: unterminated string "
-                    f"on line {start_line}"
-                )
-
-            value += self.peek()
+        while self.current() == " ":
+            spaces += 1
             self.advance()
 
-        if self.is_at_end():
+        # Tabs are intentionally not supported.
+        if self.current() == "\t":
             raise SyntaxError(
-                f"EHX Error: unterminated string "
-                f"on line {start_line}"
+                f"EHX Error: tabs are not allowed for indentation "
+                f"at line {self.line}"
             )
 
-        self.advance()
+        # Blank line or end of file
+        if self.current() in ("\n", "\0"):
+            if self.current() == "\n":
+                self.advance()
+            return
 
-        return Token(
-            TokenType.STRING,
-            value,
-            start_line,
-            start_column
-        )
+        # Comment-only line
+        if self.current() == "#":
+            while self.current() not in ("\n", "\0"):
+                self.advance()
 
-    # -------------------------
-    # Numbers
-    # -------------------------
+            if self.current() == "\n":
+                self.advance()
+
+            return
+
+        current_indent = self.indents[-1]
+
+        if spaces > current_indent:
+            self.indents.append(spaces)
+
+            self.add_token(
+                TokenType.INDENT,
+                spaces,
+                start_line,
+                start_column,
+            )
+
+        elif spaces < current_indent:
+            while spaces < self.indents[-1]:
+                self.indents.pop()
+
+                self.add_token(
+                    TokenType.DEDENT,
+                    spaces,
+                    start_line,
+                    start_column,
+                )
+
+            if spaces != self.indents[-1]:
+                raise SyntaxError(
+                    f"EHX Error: inconsistent indentation "
+                    f"at line {self.line}"
+                )
+
+        self.at_line_start = False
 
     def read_number(self):
         start_line = self.line
         start_column = self.column
 
-        value = ""
+        number = ""
 
-        while not self.is_at_end() and self.peek().isdigit():
-            value += self.peek()
-            self.advance()
+        while self.current().isdigit():
+            number += self.advance()
 
         # Decimal number
-        if (
-            not self.is_at_end()
-            and self.peek() == "."
-            and self.position + 1 < len(self.source)
-            and self.source[self.position + 1].isdigit()
-        ):
-            value += "."
-            self.advance()
+        if self.current() == "." and self.peek() != ".":
+            number += self.advance()
 
-            while not self.is_at_end() and self.peek().isdigit():
-                value += self.peek()
-                self.advance()
+            while self.current().isdigit():
+                number += self.advance()
 
-            number = float(value)
-
+            value = float(number)
         else:
-            number = int(value)
+            value = int(number)
 
-        return Token(
+        self.add_token(
             TokenType.NUMBER,
-            number,
+            value,
             start_line,
-            start_column
+            start_column,
         )
-
-    # -------------------------
-    # Identifiers / Keywords
-    # -------------------------
 
     def read_identifier(self):
         start_line = self.line
         start_column = self.column
 
-        value = ""
+        identifier = ""
 
         while (
-            not self.is_at_end()
-            and (
-                self.peek().isalnum()
-                or self.peek() == "_"
-            )
+            self.current().isalnum()
+            or self.current() == "_"
         ):
-            value += self.peek()
-            self.advance()
+            identifier += self.advance()
 
-        keywords = {
-            "set": TokenType.SET,
-            "say": TokenType.SAY,
-            "true": TokenType.TRUE,
-            "false": TokenType.FALSE,
-            "and": TokenType.AND,
-            "or": TokenType.OR,
-            "not": TokenType.NOT
-        }
-
-        token_type = keywords.get(
-            value,
-            TokenType.IDENTIFIER
+        token_type = self.KEYWORDS.get(
+            identifier,
+            TokenType.IDENTIFIER,
         )
 
-        return Token(
+        value = identifier
+
+        if token_type == TokenType.TRUE:
+            value = True
+
+        elif token_type == TokenType.FALSE:
+            value = False
+
+        self.add_token(
             token_type,
             value,
             start_line,
-            start_column
+            start_column,
         )
+
+    def read_string(self, quote_char='"'):
+        start_line = self.line
+        start_column = self.column
+
+        self.advance()  # opening quote
+
+        value = ""
+
+        while self.current() not in (quote_char, "\0"):
+            if self.current() == "\\":
+                self.advance()
+
+                escaped = self.current()
+
+                if escaped == "n":
+                    value += "\n"
+                elif escaped == "t":
+                    value += "\t"
+                elif escaped == quote_char:
+                    value += quote_char
+                elif escaped == "\\":
+                    value += "\\"
+                else:
+                    value += escaped
+
+                self.advance()
+
+            else:
+                value += self.advance()
+
+        if self.current() == "\0":
+            raise SyntaxError(
+                f"EHX Error: unterminated string "
+                f"at line {start_line}"
+            )
+
+        self.advance()  # closing quote
+
+        self.add_token(
+            TokenType.STRING,
+            value,
+            start_line,
+            start_column,
+        )
+
+    def read_fstring(self, quote_char='"'):
+        start_line = self.line
+        start_column = self.column
+
+        self.advance()  # skip 'f' or 'F'
+        self.advance()  # opening quote
+
+        raw_parts = []
+        current_literal = ""
+
+        while self.current() not in (quote_char, "\0"):
+            if self.current() == "\\":
+                self.advance()
+                escaped = self.current()
+                if escaped == "n":
+                    current_literal += "\n"
+                elif escaped == "t":
+                    current_literal += "\t"
+                elif escaped == quote_char:
+                    current_literal += quote_char
+                elif escaped == "\\":
+                    current_literal += "\\"
+                elif escaped in ("{", "}"):
+                    current_literal += escaped
+                else:
+                    current_literal += escaped
+                self.advance()
+            elif self.current() == "{" and self.peek() == "{":
+                # Escaped {{ -> literal {
+                current_literal += "{"
+                self.advance()
+                self.advance()
+            elif self.current() == "}" and self.peek() == "}":
+                # Escaped }} -> literal }
+                current_literal += "}"
+                self.advance()
+                self.advance()
+            elif self.current() == "{":
+                if current_literal:
+                    raw_parts.append({"type": "literal", "value": current_literal})
+                    current_literal = ""
+                self.advance()  # skip '{'
+                expr_src = ""
+                brace_depth = 1
+                while self.current() != "\0" and brace_depth > 0:
+                    if self.current() == "{":
+                        brace_depth += 1
+                        expr_src += self.advance()
+                    elif self.current() == "}":
+                        brace_depth -= 1
+                        if brace_depth == 0:
+                            self.advance()  # skip closing '}'
+                            break
+                        else:
+                            expr_src += self.advance()
+                    elif self.current() in ('"', "'"):
+                        # Handle quoted strings inside { ... }
+                        inner_quote = self.advance()
+                        expr_src += inner_quote
+                        while self.current() not in (inner_quote, "\0"):
+                            if self.current() == "\\":
+                                expr_src += self.advance()
+                            if self.current() != "\0":
+                                expr_src += self.advance()
+                        if self.current() == inner_quote:
+                            expr_src += self.advance()
+                    else:
+                        expr_src += self.advance()
+
+                if brace_depth > 0:
+                    raise SyntaxError(f"EHX Error: unclosed '{{' in f-string at line {start_line}")
+
+                raw_parts.append({"type": "expr", "source": expr_src.strip()})
+            else:
+                current_literal += self.advance()
+
+        if self.current() == "\0":
+            raise SyntaxError(
+                f"EHX Error: unterminated f-string at line {start_line}"
+            )
+
+        self.advance()  # closing quote
+
+        if current_literal:
+            raw_parts.append({"type": "literal", "value": current_literal})
+
+        self.add_token(
+            TokenType.FSTRING,
+            raw_parts,
+            start_line,
+            start_column,
+        )
+
+    def tokenize(self):
+        while self.position < len(self.source):
+
+            if self.at_line_start:
+                self.handle_indentation()
+
+                if self.at_line_start:
+                    continue
+
+            if self.position >= len(self.source):
+                break
+
+            char = self.current()
+
+            # Spaces inside a line
+            if char == " ":
+                self.advance()
+                continue
+
+            # Newline
+            if char == "\n":
+                if self.bracket_depth == 0:
+                    self.add_token(
+                        TokenType.NEWLINE,
+                        "\n",
+                    )
+                self.advance()
+                continue
+
+            # Comments
+            if char == "#":
+                while self.current() not in ("\n", "\0"):
+                    self.advance()
+
+                continue
+
+            # Numbers
+            if char.isdigit():
+                self.read_number()
+                continue
+
+            # f-strings: f"..." or f'...'
+            if char in ('f', 'F') and self.peek() in ('"', "'"):
+                self.read_fstring(self.peek())
+                continue
+
+            # Identifiers / keywords
+            if char.isalpha() or char == "_":
+                self.read_identifier()
+                continue
+
+            # Strings (double and single quotes)
+            if char in ('"', "'"):
+                self.read_string(char)
+                continue
+
+            # Two-character operators
+
+            if char == "=" and self.peek() == "=":
+                line = self.line
+                column = self.column
+
+                self.advance()
+                self.advance()
+
+                self.add_token(
+                    TokenType.EQUAL_EQUAL,
+                    "==",
+                    line,
+                    column,
+                )
+                continue
+
+            if char == "!" and self.peek() == "=":
+                line = self.line
+                column = self.column
+
+                self.advance()
+                self.advance()
+
+                self.add_token(
+                    TokenType.NOT_EQUAL,
+                    "!=",
+                    line,
+                    column,
+                )
+                continue
+
+            if char == ">" and self.peek() == "=":
+                line = self.line
+                column = self.column
+
+                self.advance()
+                self.advance()
+
+                self.add_token(
+                    TokenType.GREATER_EQUAL,
+                    ">=",
+                    line,
+                    column,
+                )
+                continue
+
+            if char == "<" and self.peek() == "=":
+                line = self.line
+                column = self.column
+
+                self.advance()
+                self.advance()
+
+                self.add_token(
+                    TokenType.LESS_EQUAL,
+                    "<=",
+                    line,
+                    column,
+                )
+                continue
+
+            if char == "+" and self.peek() == "=":
+                line, column = self.line, self.column
+                self.advance()
+                self.advance()
+                self.add_token(TokenType.PLUS_EQUAL, "+=", line, column)
+                continue
+
+            if char == "-" and self.peek() == "=":
+                line, column = self.line, self.column
+                self.advance()
+                self.advance()
+                self.add_token(TokenType.MINUS_EQUAL, "-=", line, column)
+                continue
+
+            if char == "*" and self.peek() == "*":
+                line, column = self.line, self.column
+                self.advance()
+                self.advance()
+                self.add_token(TokenType.STAR_STAR, "**", line, column)
+                continue
+
+            if char == "*" and self.peek() == "=":
+                line, column = self.line, self.column
+                self.advance()
+                self.advance()
+                self.add_token(TokenType.STAR_EQUAL, "*=", line, column)
+                continue
+
+            if char == "/" and self.peek() == "/":
+                line, column = self.line, self.column
+                self.advance()
+                self.advance()
+                self.add_token(TokenType.SLASH_SLASH, "//", line, column)
+                continue
+
+            if char == "/" and self.peek() == "=":
+                line, column = self.line, self.column
+                self.advance()
+                self.advance()
+                self.add_token(TokenType.SLASH_EQUAL, "/=", line, column)
+                continue
+
+            if char == "%" and self.peek() == "=":
+                line, column = self.line, self.column
+                self.advance()
+                self.advance()
+                self.add_token(TokenType.PERCENT_EQUAL, "%=", line, column)
+                continue
+
+            if char == "." and self.peek() == ".":
+                line = self.line
+                column = self.column
+
+                self.advance()
+                self.advance()
+
+                self.add_token(
+                    TokenType.DOT_DOT,
+                    "..",
+                    line,
+                    column,
+                )
+                continue
+
+            # Single-character operators
+
+            single_tokens = {
+                "+": TokenType.PLUS,
+                "-": TokenType.MINUS,
+                "*": TokenType.STAR,
+                "/": TokenType.SLASH,
+                "%": TokenType.PERCENT,
+                "=": TokenType.EQUAL,
+                ">": TokenType.GREATER,
+                "<": TokenType.LESS,
+                "(": TokenType.LEFT_PAREN,
+                ")": TokenType.RIGHT_PAREN,
+                "[": TokenType.LEFT_BRACKET,
+                "]": TokenType.RIGHT_BRACKET,
+                "{": TokenType.LEFT_BRACE,
+                "}": TokenType.RIGHT_BRACE,
+                ":": TokenType.COLON,
+                ",": TokenType.COMMA,
+                ".": TokenType.DOT,
+            }
+
+            if char in single_tokens:
+                line = self.line
+                column = self.column
+
+                if char in ("(", "[", "{"):
+                    self.bracket_depth += 1
+                elif char in (")", "]", "}"):
+                    if self.bracket_depth > 0:
+                        self.bracket_depth -= 1
+
+                self.advance()
+
+                self.add_token(
+                    single_tokens[char],
+                    char,
+                    line,
+                    column,
+                )
+                continue
+
+            raise SyntaxError(
+                f"EHX Error: unexpected character "
+                f"'{char}' at line {self.line}, "
+                f"column {self.column}"
+            )
+
+        # Finish any remaining indentation levels.
+        while len(self.indents) > 1:
+            self.indents.pop()
+
+            self.add_token(
+                TokenType.DEDENT,
+                0,
+                self.line,
+                self.column,
+            )
+
+        self.add_token(
+            TokenType.EOF,
+            None,
+            self.line,
+            self.column,
+        )
+
+        return self.tokens

@@ -48,9 +48,62 @@
     "strings": {
       "patterns": [
         {
+          "name": "string.interpolated.ehx",
+          "begin": "\\b[fF]\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.ehx",
+              "match": "\\\\."
+            },
+            {
+              "name": "meta.embedded.expression.ehx",
+              "begin": "\\{",
+              "end": "\\}",
+              "patterns": [
+                {
+                  "include": "$self"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "string.interpolated.ehx",
+          "begin": "\\b[fF]'",
+          "end": "'",
+          "patterns": [
+            {
+              "name": "constant.character.escape.ehx",
+              "match": "\\\\."
+            },
+            {
+              "name": "meta.embedded.expression.ehx",
+              "begin": "\\{",
+              "end": "\\}",
+              "patterns": [
+                {
+                  "include": "$self"
+                }
+              ]
+            }
+          ]
+        },
+        {
           "name": "string.quoted.double.ehx",
           "begin": "\"",
           "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.ehx",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.ehx",
+          "begin": "'",
+          "end": "'",
           "patterns": [
             {
               "name": "constant.character.escape.ehx",
@@ -74,7 +127,7 @@
       "patterns": [
         {
           "name": "constant.language.boolean.ehx",
-          "match": "\\b(true|false)\\b"
+          "match": "\\b(true|false|none)\\b"
         }
       ]
     },
@@ -83,7 +136,7 @@
       "patterns": [
         {
           "name": "keyword.control.ehx",
-          "match": "\\b(set)\\b"
+          "match": "\\b(set|let|when|otherwise|while|for|in|fn|return|load|import|try|catch|break|continue)\\b"
         }
       ]
     },
@@ -101,7 +154,7 @@
       "patterns": [
         {
           "name": "support.function.ehx",
-          "match": "\\b(say)\\b"
+          "match": "\\b(show|show_err|ask|args|format|save|read|add_to|has_file|lines|pause|wait|len|push|pop|keys|values|kind|type|str|int|float|bool|parse_int|parse_float|is_nan|range|spawn|panic|set_timeout|set_interval|file_read|file_write|file_append|file_exists|file_lines|exec|sleep|timestamp|time_now|env|regex_match|regex_find|regex_replace|tcp_connect|http_get|http_post|md5|sha1|sha256|sha512|base64_encode|base64_decode|to_json|from_json|zip_pack|zip_unpack|lowest|highest|low|high|min|max|math_sqrt|math_pow|math_floor|math_ceil|math_round|math_abs|math_random|math_randint)\\b"
         }
       ]
     },
@@ -119,7 +172,7 @@
       "patterns": [
         {
           "name": "keyword.operator.ehx",
-          "match": "[+\\-*/=]"
+          "match": "\\*\\*|//|\\+=|-=|\\*=|/=|%=|%=|[+\\-*/%=]"
         }
       ]
     },
